@@ -35,9 +35,18 @@ class EvaTC {
             return Type.string;
         }
 
+        if (this._isBoolean(exp)) {
+            return Type.boolean;
+        }
+
         // Math operations
         if (this._isBinary(exp)) {
             return this._binary(exp, env);
+        }
+
+        // Boolean binary
+        if (this._isBooleanBinary(exp)) {
+            return this._booleanBinary(exp, env);
         }
 
         // Variable declarations
@@ -82,6 +91,20 @@ class EvaTC {
             const blockEnv = new TypeEnvironment({}, env);
             return this._tcBlock(exp, blockEnv);
         }
+
+        // If expressions
+        if (exp[0] === 'if') {
+            const [_tag, condition, consequent, alternate] = exp;
+
+            // Type of new value should be the same as initial type
+            const t1 = this.tc(condition, env);
+            this._expect(t1, Type.boolean, condition, exp);
+
+            const t2 = this.tc(consequent, env);
+            const t3 = this.tc(alternate, env);
+
+            return this._expect(t3, t2, exp, exp);
+        }
     }
 
     _tcBlock(exp, env) {
@@ -108,9 +131,22 @@ class EvaTC {
         return typeof exp === 'string' && exp[0] === '"' && exp.slice(-1) === '"';
     }
 
+    _isBoolean(exp) {
+        return typeof exp === 'boolean' || exp === 'true' || exp === 'false';
+    }
+
     _isBinary(exp) {
         return /^[+\-*/]$/.test(exp[0]);
     }
+
+    _isBooleanBinary(exp) {
+        return exp[0] === '>'  ||
+               exp[0] === '<'  ||
+               exp[0] === '>=' ||
+               exp[0] === '<=' ||
+               exp[0] === '!=' ||
+               exp[0] === '==';
+    } 
 
     _binary(exp, env) {
         this._checkArity(exp, 2);
@@ -123,6 +159,17 @@ class EvaTC {
         this._expectOperatorType(t2, allowedTypes, exp);
 
         return this._expect(t2, t1, exp[2], exp);
+    }
+
+    _booleanBinary(exp, env) {
+        this._checkArity(exp, 2);
+
+        const t1 = this.tc(exp[1], env);
+        const t2 = this.tc(exp[2], env);
+
+        this._expect(t2, t1, exp[2], exp);
+
+        return Type.boolean;
     }
 
     /**

@@ -9,6 +9,7 @@ tests = [
     require('./math_test'),
     require('./varaible_test'),
     require('./block_test'),
+    require('./if_test'),
 ]
 
 tests.forEach(test => test(eva));

@@ -22,11 +22,22 @@ class TypeEnvironment {
      * Returns the type of variable or thrown undefined variable.
      */
     lookup(name) {
-        if (!this.record.hasOwnProperty(name)) {
-            throw new ReferenceError(`Undefined variable ${name}.`);
+        return this.resolve(name).record[name];
+    }
+
+    /**
+     * Resolve identifier name and returns it's envirinment. 
+     */
+    resolve(name) {
+        if (this.record.hasOwnProperty(name)) {
+            return this;
         }
 
-        return this.record[name];
+        if (this.parent === null) {
+            throw new ReferenceError(`Undefined variable "${name}".`);
+        }
+
+        return this.parent.resolve(name);
     }
 }
 

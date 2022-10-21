@@ -8,6 +8,7 @@ tests = [
     require('./self_eval_test'),
     require('./math_test'),
     require('./varaible_test'),
+    require('./block_test'),
 ]
 
 tests.forEach(test => test(eva));

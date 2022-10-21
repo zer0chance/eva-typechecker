@@ -10,7 +10,7 @@ class EvaTC {
     constructor() {
         // Creating global environment.
         this.global = new TypeEnvironment({
-            VERSION: Type.string
+            VERSION: Type.string,
         });
     }
 
@@ -30,7 +30,7 @@ class EvaTC {
 
         // Math operations
         if (this._isBinary(exp)) {
-            return this._binary(exp);
+            return this._binary(exp, env);
         }
 
         // Variable declarations
@@ -54,10 +54,39 @@ class EvaTC {
             return env.define(name, valueType);
         }
 
+        // Variable update
+        if (exp[0] === 'set') {
+            const [_tag, ref, value] = exp;
+
+            // Type of new value should be the same as initial type
+            const valueType = this.tc(value, env);
+            const varType = this.tc(ref, env);
+
+            return this._expect(valueType, varType, value, exp);
+        }
+
         // Variable access
         if (this._isVariableName(exp)) {
-            return env.lookup(exp)
+            return env.lookup(exp);
         }
+
+        // Blocks
+        if (exp[0] === 'begin') {
+            const blockEnv = new TypeEnvironment({}, env);
+            return this._tcBlock(exp, blockEnv);
+        }
+    }
+
+    _tcBlock(exp, env) {
+        let result;
+
+        const [_tag, ...expressions] = exp;
+
+        expressions.forEach(exp => {
+            result = this.tc(exp, env);
+        })
+
+        return result;
     }
 
     _isVariableName(exp) {
@@ -76,7 +105,7 @@ class EvaTC {
         return /^[+\-*/]$/.test(exp[0]);
     }
 
-    _binary(exp) {
+    _binary(exp, env) {
         this._checkArity(exp, 2);
 
         const t1 = this.tc(exp[1], env);

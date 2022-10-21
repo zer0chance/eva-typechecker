@@ -15,6 +15,13 @@ class Type {
     equals(other) {
         return this.name === other.name;
     }
+
+    static fromString(typeString) {
+        if (this.hasOwnProperty(typeString)) {
+            return this[typeString];
+        }
+        throw `Unknown type: ${typeString}.`;
+    }
 }
 
 Type.number = new Type('number');

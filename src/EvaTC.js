@@ -1,14 +1,23 @@
+const { env } = require('process');
 const Type = require('./Type');
+const TypeEnvironment = require('./TypeEnvironment');
 
 /**
  * Static Eva typechecker.
  */
 class EvaTC {
 
+    constructor() {
+        // Creating global environment.
+        this.global = new TypeEnvironment({
+            VERSION: Type.string
+        });
+    }
+
     /**
      * Validates type of expression.
      */
-    tc(exp) {
+    tc(exp, env = this.global) {
 
         // Self-evaluating expression
         if (this._isNumber(exp)) {
@@ -23,6 +32,36 @@ class EvaTC {
         if (this._isBinary(exp)) {
             return this._binary(exp);
         }
+
+        // Variable declarations
+        if (exp[0] === 'var') {
+            const [_tag, name, value] = exp;
+
+            const valueType = this.tc(value, env);
+
+            // In case if user provides a type of a variable:
+            // (var (x number) 5)
+            if (Array.isArray(name)) {
+                const [varName, typeStr] = name;
+
+                const expectedType = Type.fromString(typeStr);
+
+                this._expect(valueType, expectedType, value, exp);
+
+                return env.define(varName, valueType);
+            }
+
+            return env.define(name, valueType);
+        }
+
+        // Variable access
+        if (this._isVariableName(exp)) {
+            return env.lookup(exp)
+        }
+    }
+
+    _isVariableName(exp) {
+        return typeof exp === 'string' && /^[+\-*<>=a-zA-Z0-9_:]+$/.test(exp);
     }
 
     _isNumber(exp) {
@@ -40,8 +79,8 @@ class EvaTC {
     _binary(exp) {
         this._checkArity(exp, 2);
 
-        const t1 = this.tc(exp[1]);
-        const t2 = this.tc(exp[2]);
+        const t1 = this.tc(exp[1], env);
+        const t2 = this.tc(exp[2], env);
 
         const allowedTypes = this._getOperandsTypeForOperator(exp[0]);
         this._expectOperatorType(t1, allowedTypes, exp);

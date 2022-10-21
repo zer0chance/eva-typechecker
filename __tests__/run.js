@@ -4,7 +4,10 @@ const EvaTC = require('../src/EvaTC');
 
 const eva = new EvaTC();
 
-assert.equal(eva.tc(1), 'number');
-assert.equal(eva.tc('"hello'), 'string');
+tests = [
+    require('./self_eval_test'),
+]
+
+tests.forEach(test => test(eva));
 
 console.log('All assertions passed!');

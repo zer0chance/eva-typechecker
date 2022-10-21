@@ -13,6 +13,13 @@ class EvaTC {
             VERSION: Type.string,
         });
     }
+    
+    /**
+     * Evaluate global code wrapping into scope.
+     */
+    tcGlobal(exp) {
+        return this._tcBlock(exp, this.global);
+    }
 
     /**
      * Validates type of expression.

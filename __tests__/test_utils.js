@@ -1,11 +1,15 @@
-const assert = require("assert");
+const assert = require('assert');
+const evaParser = require('../parser/evaParser')
 
 function exec(eva, exp) {
+    if (typeof exp === 'string') {
+        exp = evaParser.parse(`(begin ${exp})`);
+    }
     return eva.tc(exp);
 }
 
 function test(eva, exp, expected) {
-    const actual = eva.tc(exp);
+    const actual = exec(eva, exp);
     try {
         assert.strictEqual(actual.equals(expected), true);
     } catch(e) {

@@ -6,6 +6,7 @@ const eva = new EvaTC();
 
 tests = [
     require('./self_eval_test'),
+    require('./math_test'),
 ]
 
 tests.forEach(test => test(eva));

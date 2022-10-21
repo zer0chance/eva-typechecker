@@ -105,6 +105,17 @@ class EvaTC {
 
             return this._expect(t3, t2, exp, exp);
         }
+
+        // while expressions
+        if (exp[0] === 'while') {
+            const [_tag, condition, body] = exp;
+
+            // Type of new value should be the same as initial type
+            const t1 = this.tc(condition, env);
+            this._expect(t1, Type.boolean, condition, exp);
+
+            return this.tc(body, env);
+        }
     }
 
     _tcBlock(exp, env) {

@@ -18,7 +18,17 @@ class EvaTC {
      * Evaluate global code wrapping into scope.
      */
     tcGlobal(exp) {
-        return this._tcBlock(exp, this.global);
+        return this._tcBody(exp, this.global);
+    }
+
+    /**
+     * Checks body (global or function).
+     */
+    _tcBody(body, env) {
+        if (body[0] === 'begin') {
+        return this._tcBlock(body, env);
+        }
+        return this.tc(body, env);
     }
 
     /**
@@ -106,7 +116,7 @@ class EvaTC {
             return this._expect(t3, t2, exp, exp);
         }
 
-        // while expressions
+        // While expressions
         if (exp[0] === 'while') {
             const [_tag, condition, body] = exp;
 
@@ -116,6 +126,38 @@ class EvaTC {
 
             return this.tc(body, env);
         }
+
+        // Function declaration
+        if (exp[0] === 'def') {
+            const [_tag, name, params, _retDel, returnTypeStr, body] = exp;
+            return env.define(name, this._tcFunction(params, returnTypeStr, body, env));
+        }
+    }
+
+    _tcFunction(params, returnTypeStr, body, env) {
+        const returnType = Type.fromString(returnTypeStr);
+
+        const paramRecord = {};
+        const paramTypes = [];
+
+        params.forEach(([name, typeStr]) => {
+            const paramType = Type.fromString(typeStr);
+            paramRecord[name] = paramType;
+            paramTypes.push(paramType);
+        });
+
+        const fnEnv = new TypeEnvironment(paramRecord, env);
+
+        const actualReturnType = this._tcBody(body, fnEnv);
+
+        if (!returnType.equals(actualReturnType)) {
+            throw `Expected function ${body} to return ${returnType}, but got ${actualReturnType}.`;
+        }
+
+        return new Type.Function({
+            paramTypes,
+            returnType
+        })
     }
 
     _tcBlock(exp, env) {

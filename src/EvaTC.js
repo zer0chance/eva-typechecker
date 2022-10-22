@@ -93,6 +93,35 @@ class EvaTC {
             return classType;
         }
 
+        // New calls
+        if (exp[0] === 'new') {
+            const [_tag, className, ...argValues] = exp;
+
+            const classType = Type[className];
+
+            if (!classType) {
+                throw `Unknown class ${classType}`;
+            }
+
+            const argTypes = argValues.map(arg => this.tc(arg, env));
+
+            return this._checkFunctionCall(
+                classType.getField('constructor'),
+                [classType, ...argTypes],
+                env,
+                exp
+            );
+        }
+
+        // Property access
+        if (exp[0] === 'prop') {
+            const [_tag, instance, name] = exp;
+
+            const instanceType = this.tc(instance, env);
+
+            return instanceType.getField(name);
+        }
+
         // Variable declarations
         if (exp[0] === 'var') {
             const [_tag, name, value] = exp;
@@ -117,6 +146,17 @@ class EvaTC {
         // Variable update
         if (exp[0] === 'set') {
             const [_tag, ref, value] = exp;
+
+            // Prop assignment
+            if (ref[0] === 'prop') {
+                const [_tag, instance, propName] = ref;
+                const instanceType = this.tc(instance, env);
+
+                const valueType = this.tc(value);
+                const propType = instanceType.getField(propName);
+
+                return this._expect(valueType, propType, value, exp);
+            }
 
             // Type of new value should be the same as initial type
             const valueType = this.tc(value, env);

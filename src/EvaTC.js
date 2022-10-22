@@ -61,6 +61,24 @@ class EvaTC {
             return this._booleanBinary(exp, env);
         }
 
+        // Types aliasing
+        if (exp[0] === 'type') {
+            const [_tag, name, base] = exp;
+
+            if (Type.hasOwnProperty(name)) {
+                throw `Type "${name}" is already defined: ${exp}`;
+            }
+
+            if (!Type.hasOwnProperty(base)) {
+                throw `Type "${base}" is undefined: ${exp}`;
+            }
+
+            return (Type[name] = new Type.Alias({
+                name,
+                parent: Type[base]
+            }));
+        }
+
         // Variable declarations
         if (exp[0] === 'var') {
             const [_tag, name, value] = exp;

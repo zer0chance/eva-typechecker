@@ -84,7 +84,7 @@ class EvaTC {
             const [_tag, name, superClassName, body] = exp;
 
             const superClass = Type[superClassName];
-            const classType  = new Type.Class(name, superClass);
+            const classType  = new Type.Class({name, superClass});
 
             Type[name] = env.define(name, classType);
 
@@ -111,6 +111,19 @@ class EvaTC {
                 env,
                 exp
             );
+        }
+
+        // Super calls
+        if (exp[0] === 'super') {
+            const [_tag, className] = exp;
+
+            const classType = Type[className];
+
+            if (classType === null) {
+                throw `Unknown class ${classType}`;
+            }
+
+            return classType.superClass;
         }
 
         // Property access
@@ -152,7 +165,7 @@ class EvaTC {
                 const [_tag, instance, propName] = ref;
                 const instanceType = this.tc(instance, env);
 
-                const valueType = this.tc(value);
+                const valueType = this.tc(value, env);
                 const propType = instanceType.getField(propName);
 
                 return this._expect(valueType, propType, value, exp);

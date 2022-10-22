@@ -131,7 +131,12 @@ class EvaTC {
 
         // Function declaration
         if (exp[0] === 'def') {
-            const [_tag, name, params, _retDel, returnTypeStr, body] = exp;
+            // Transpile to the variable declaration
+
+            const varExp = this._transformDefToVarLambda(exp);
+            const name   = exp[1];
+            const params = exp[2];
+            const returnTypeStr = exp[4];
 
             // We need to preinstall function into environment before
             // typechecking the body to support recursive calls.
@@ -147,7 +152,13 @@ class EvaTC {
                 })
             );
             
-            return this._tcFunction(params, returnTypeStr, body, env);
+            return this.tc(varExp, env);
+        }
+
+        // Lambda functions
+        if (exp[0] === 'lambda') {
+            const [_tag, param, _retDel, returnTypeStr, body] = exp;
+            return this._tcFunction(param, returnTypeStr, body, env);
         }
 
         // Function calls
@@ -159,6 +170,11 @@ class EvaTC {
 
             return this._checkFunctionCall(fn, argTypes, env, exp);
         }
+    }
+
+    _transformDefToVarLambda(exp) {
+        const [_tag, name, params, _retDel, returnTypeStr, body] = exp;
+        return ['var', name, ['lambda', params, _retDel, returnTypeStr, body]];
     }
 
     _checkFunctionCall(fn, argTypes, env, exp) {

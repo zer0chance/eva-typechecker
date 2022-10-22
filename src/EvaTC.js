@@ -65,18 +65,25 @@ class EvaTC {
         if (exp[0] === 'type') {
             const [_tag, name, base] = exp;
 
-            if (Type.hasOwnProperty(name)) {
-                throw `Type "${name}" is already defined: ${exp}`;
-            }
+            // Union type: (or number string)
+            if (base[0] === 'or') {
+                const options = base.slice(1);
+                const optionTypes = options.map(option => Type.fromString(option));
+                return (Type[name] = new Type.Union({name, optionTypes}));
+            } else {
+                if (Type.hasOwnProperty(name)) {
+                    throw `Type "${name}" is already defined: ${exp}`;
+                }
 
-            if (!Type.hasOwnProperty(base)) {
-                throw `Type "${base}" is undefined: ${exp}`;
-            }
+                if (!Type.hasOwnProperty(base)) {
+                    throw `Type "${base}" is undefined: ${exp}`;
+                }
 
-            return (Type[name] = new Type.Alias({
-                name,
-                parent: Type[base]
-            }));
+                return (Type[name] = new Type.Alias({
+                    name,
+                    parent: Type[base]
+                }));
+            }
         }
 
         // Class declaration
@@ -374,7 +381,9 @@ class EvaTC {
             case '+':
                 return [Type.string, Type.number];
             case '-':
+                return [Type.number];
             case '/':
+                return [Type.number];
             case '*':
                 return [Type.number];
             default:
@@ -396,9 +405,14 @@ class EvaTC {
      * Expects the type of operator.
      */
     _expectOperatorType(actual, allowedTypes, exp) {
-        if (!allowedTypes.some(t => t.equals(actual))) {
-            throw `Unexpected type: ${actual} in ${exp}. Allowed: ${allowedTypes}`;
+        if (actual instanceof Type.Union) {
+            if (actual.includesAll(allowedTypes)) {
+                return;
+            }
+        } else if (allowedTypes.some(t => t.equals(actual))) {
+            return;
         }
+        throw `Unexpected type: ${actual} in ${exp}. Allowed: ${allowedTypes}`;
     }
 
     /**

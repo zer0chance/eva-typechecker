@@ -16,6 +16,7 @@ tests = [
     require('./lambda_functions_test'),
     require('./alias_test'),
     require('./class_test'),
+    require('./union_test'),
 ]
 
 tests.forEach(test => test(eva));

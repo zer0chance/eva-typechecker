@@ -11,6 +11,8 @@ class EvaTC {
         // Creating global environment.
         this.global = new TypeEnvironment({
             VERSION: Type.string,
+            sum: Type.fromString('Fn<number<number,number>>'),
+            square: Type.fromString('Fn<number<number>>')
         });
     }
     
@@ -132,6 +134,29 @@ class EvaTC {
             const [_tag, name, params, _retDel, returnTypeStr, body] = exp;
             return env.define(name, this._tcFunction(params, returnTypeStr, body, env));
         }
+
+        // Function calls
+        if (Array.isArray(exp)) {
+            const fn = this.tc(exp[0], env);
+            const argValues = exp.slice(1);
+
+            const argTypes = argValues.map(arg => this.tc(arg, env));
+
+            return this._checkFunctionCall(fn, argTypes, env, exp);
+        }
+    }
+
+    _checkFunctionCall(fn, argTypes, env, exp) {
+        if (fn.paramTypes.length !== argTypes.length) {
+            throw `Function ${fn.getName()} expects ${fn.paramTypes.length} arguments, but ${
+            argTypes.length} were given in ${exp}.`;
+        }
+
+        argTypes.forEach((argType, index) => {
+            this._expect(argType, fn.paramTypes[index], argType[index], exp);
+        })
+
+        return fn.returnType;
     }
 
     _tcFunction(params, returnTypeStr, body, env) {

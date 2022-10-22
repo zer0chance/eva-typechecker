@@ -12,6 +12,7 @@ tests = [
     require('./if_test'),
     require('./while_test'),
     require('./user_defined_functions_test'),
+    require('./builtin_functions_test'),
 ]
 
 tests.forEach(test => test(eva));

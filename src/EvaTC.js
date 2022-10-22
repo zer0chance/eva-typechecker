@@ -79,6 +79,20 @@ class EvaTC {
             }));
         }
 
+        // Class declaration
+        if (exp[0] === 'class') {
+            const [_tag, name, superClassName, body] = exp;
+
+            const superClass = Type[superClassName];
+            const classType  = new Type.Class(name, superClass);
+
+            Type[name] = env.define(name, classType);
+
+            this._tcBody(body, classType.env);
+
+            return classType;
+        }
+
         // Variable declarations
         if (exp[0] === 'var') {
             const [_tag, name, value] = exp;
